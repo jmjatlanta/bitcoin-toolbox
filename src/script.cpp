@@ -21,6 +21,15 @@ void script::add_int(int64_t val)
    }
 }
 
+void script::add_bytes(std::vector<uint8_t> val)
+{
+   for(auto b : val)
+   {
+      bytes[byte_len] = b;
+      ++byte_len;
+   }
+}
+
 std::vector<uint8_t> script::get_bytes_as_vector()
 {
    std::vector<uint8_t> retVal(bytes, bytes + byte_len);

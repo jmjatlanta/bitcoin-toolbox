@@ -11,6 +11,7 @@ class script
       ~script() {}
       void add_opcode(unsigned char opcode);
       void add_int(int64_t val);
+      void add_bytes(std::vector<uint8_t> val);
       unsigned char* get_bytes() { return bytes; }
       std::vector<uint8_t> get_bytes_as_vector();
       uint16_t get_byte_len() { return byte_len; }
