@@ -1,5 +1,10 @@
 #pragma once
 
+#include <string>
+#include <vector>
+#include <utility>
+#include <cstdint>
+
 namespace bc_toolbox {
    // constants
    unsigned const char OP_0 = 0x00;
@@ -127,5 +132,10 @@ namespace bc_toolbox {
    unsigned const char OP_NOP8 = 0xb7;
    unsigned const char OP_NOP9 = 0xb8;
    unsigned const char OP_NOP10 = 0xb9;
+
+   // deal with integers
+   std::pair<uint8_t, std::vector<uint8_t> > pack(int64_t incoming);
+   // convert opcodes to strings
+   std::string opcode_to_string(unsigned const char op_code);
 }
 

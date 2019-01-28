@@ -7,9 +7,14 @@ ADD_DEFINITIONS( -DBOOST_TEST_DYN_LINK )
 project (test)
 
 find_package( Boost COMPONENTS unit_test_framework REQUIRED )
+find_package( OpenSSL REQUIRED )
 
 link_directories( ${Boost_LIBRARY_DIRS} )
 include_directories( ${Boost_INCLUDE_DIRS} )
 include_directories( src )
-add_executable( test tests/script_test.cpp )
-target_link_libraries( test ${Boost_LIBRARIES} )
+add_executable( test 
+      tests/script_test.cpp 
+      src/hex_conversion.cpp 
+      src/script.cpp 
+   )
+target_link_libraries( test ${Boost_LIBRARIES} OpenSSL::SSL )
