@@ -2,6 +2,11 @@
 
 #include <hex_conversion.hpp>
 
+#include <openssl/sha.h>
+#include <openssl/ripemd.h>
+
+#include <base58.h>
+
 namespace bc_toolbox {
 
    std::pair<uint8_t, std::vector<uint8_t> > pack(int64_t incoming) 
@@ -170,4 +175,35 @@ namespace bc_toolbox {
       }
    }
 
+   std::vector<uint8_t> sha256(std::string incoming) 
+   {
+      std::vector<uint8_t> conv{incoming.c_str(), incoming.c_str() + incoming.size()};
+      return sha256(conv);
+   }
+
+   std::vector<uint8_t> sha256(std::vector<uint8_t> incoming)
+   {
+      unsigned char hash[SHA256_DIGEST_LENGTH];
+      SHA256_CTX sha256;
+      SHA256_Init(&sha256);
+      SHA256_Update(&sha256, &incoming[0], incoming.size());
+      SHA256_Final(hash, &sha256);
+      return std::vector<uint8_t>(hash, hash + SHA256_DIGEST_LENGTH);
+   }
+
+   std::vector<uint8_t> ripemd160(std::vector<uint8_t> incoming)
+   {
+      unsigned char md[RIPEMD160_DIGEST_LENGTH];
+      RIPEMD160_CTX md160;
+      RIPEMD160_Init(&md160);
+      RIPEMD160_Update(&md160, &incoming[0], incoming.size());
+      RIPEMD160_Final(md, &md160);
+      return std::vector<uint8_t>(md, md + RIPEMD160_DIGEST_LENGTH);
+   }
+
+   std::string base58check(std::vector<uint8_t> incoming)
+   {
+      // use bitcoin library for base58check function
+      return EncodeBase58Check(incoming);
+   }
 }

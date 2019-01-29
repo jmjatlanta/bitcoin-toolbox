@@ -137,5 +137,9 @@ namespace bc_toolbox {
    std::pair<uint8_t, std::vector<uint8_t> > pack(int64_t incoming);
    // convert opcodes to strings
    std::string opcode_to_string(unsigned const char op_code);
+   std::vector<uint8_t> sha256(std::string incoming);
+   std::vector<uint8_t> sha256(std::vector<uint8_t> incoming);
+   std::vector<uint8_t> ripemd160(std::vector<uint8_t> incoming);
+   std::string base58check(std::vector<uint8_t> incoming);
 }
 

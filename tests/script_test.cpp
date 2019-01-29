@@ -8,13 +8,9 @@
 
 BOOST_AUTO_TEST_SUITE( script_test )
 
-BOOST_AUTO_TEST_CASE( convert_script )
-{
-   std::vector<unsigned char> script = { bc_toolbox::OP_DUP, bc_toolbox::OP_HASH160, 14, 0 };
-   std::vector<unsigned char> expected = { 0x76, 0xa9, 14, 0 };
-   BOOST_CHECK_EQUAL(script[0], 0x76);
-}
-
+/**
+ * Helper to check vectors for equality
+ */
 bool test_vector(std::vector<uint8_t> incoming, std::vector<uint8_t> expected)
 {
    BOOST_CHECK_EQUAL( incoming.size(), expected.size() );
@@ -26,6 +22,9 @@ bool test_vector(std::vector<uint8_t> incoming, std::vector<uint8_t> expected)
    return true;
 }
 
+/**
+ * Test converting integer the bitcoin way
+ */
 BOOST_AUTO_TEST_CASE( int_conv )
 {
    {
@@ -66,12 +65,14 @@ BOOST_AUTO_TEST_CASE( int_conv )
    }
 }
 
+/**
+ * A simple script
+ */
 BOOST_AUTO_TEST_CASE( simple_add )
 {
    bc_toolbox::script s;
    // OP_ADD 99 OP_EQUAL
    s.add_opcode(bc_toolbox::OP_ADD);
-   s.add_int(1); // push 1 byte onto stack
    s.add_int(99);
    s.add_opcode(bc_toolbox::OP_EQUAL);
    BOOST_TEST_MESSAGE("Convert script to binary array");
@@ -97,6 +98,9 @@ BOOST_AUTO_TEST_CASE( simple_add )
    }
 }
 
+/**
+ * Test a multisig script
+ */
 BOOST_AUTO_TEST_CASE( multisig )
 {
    bc_toolbox::script s;
@@ -145,6 +149,96 @@ BOOST_AUTO_TEST_CASE( multisig )
          0xab, 0x6e, 0x93, 0x34, 0xf9, 0x5f, 0x6d, 0x4e,
          0x91, 0x48, 0xd0, 0xe5, 0x51, 0xc2, 0x87 };
       test_vector( s.p2sh_script(), expected );
+   }
+}
+
+/**
+ * Test a timelock script
+ */
+BOOST_AUTO_TEST_CASE( timelock_script )
+{
+   bc_toolbox::script s;
+   s.add_int(1546288031);
+   s.add_opcode(bc_toolbox::OP_CHECKLOCKTIMEVERIFY);
+   s.add_opcode(bc_toolbox::OP_DROP);
+   s.add_opcode(bc_toolbox::OP_DUP);
+   s.add_opcode(bc_toolbox::OP_HASH160);
+   std::vector<uint8_t> signature{
+         0x37, 0x1c, 0x20, 0xfb, 0x2e, 0x98, 0x99, 0x33, 
+         0x8c, 0xe5, 0xe9, 0x99, 0x08, 0xe6, 0x4f, 0xd3, 
+         0x0b, 0x78, 0x93, 0x13 };
+   s.add_bytes_with_size(signature);
+   s.add_opcode(bc_toolbox::OP_EQUALVERIFY);
+   s.add_opcode(bc_toolbox::OP_CHECKSIG);
+   {
+      std::vector<uint8_t> expected{
+         0x04, 0x9f, 0x7b, 0x2a, 0x5c, 0xb1, 0x75, 0x76, 
+         0xa9, 0x14, 0x37, 0x1c, 0x20, 0xfb, 0x2e, 0x98, 
+         0x99, 0x33, 0x8c, 0xe5, 0xe9, 0x99, 0x08, 0xe6, 
+         0x4f, 0xd3, 0x0b, 0x78, 0x93, 0x13, 0x88, 0xac};
+      test_vector( s.get_bytes_as_vector(), expected );
+   }
+}
+
+/**
+ * Test a timelock script mentioned at 
+ * https://bitcoin.stackexchange.com/questions/74753/htlc-hash-time-lock-contract-using-bitcoin-qt
+ */
+BOOST_AUTO_TEST_CASE( timelock_script_stackexchange )
+{
+   std::vector<uint8_t> sha256 = bc_toolbox::sha256("Bitcoin_rules!");
+   std::vector<uint8_t> hash_lock = bc_toolbox::ripemd160(sha256);
+
+   bc_toolbox::script s;
+   s.add_opcode(bc_toolbox::OP_IF);
+   s.add_opcode(bc_toolbox::OP_HASH160);
+   s.add_bytes_with_size(hash_lock);
+   s.add_opcode(bc_toolbox::OP_EQUAL);
+   s.add_opcode(bc_toolbox::OP_ELSE);
+   s.add_opcode(bc_toolbox::OP_DUP);
+   s.add_opcode(bc_toolbox::OP_HASH160);
+   std::vector<uint8_t> pubkey_hash {
+      0x6a, 0x81, 0xe5, 0x87, 0x58, 0x5e, 0x58, 0xb0, 
+      0x7d, 0xce, 0x29, 0x3a, 0x08, 0x98, 0x94, 0xa0, 
+      0xf8, 0xa6, 0x1b, 0x84 };
+   s.add_bytes_with_size(pubkey_hash);
+   s.add_opcode(bc_toolbox::OP_EQUALVERIFY);
+   s.add_opcode(bc_toolbox::OP_CHECKSIG);
+   s.add_opcode(bc_toolbox::OP_ENDIF);
+   {
+      std::vector<uint8_t> expected_redeem_script {
+         0x63, 0xa9, 0x14, 0x81, 0x03, 0xb0, 0xdf, 0x9a, 
+         0xd7, 0x5e, 0x2b, 0x77, 0x4f, 0x43, 0xd6, 0xe7, 
+         0xe7, 0x1e, 0xea, 0xa2, 0xc7, 0x3e, 0xfb, 0x87, 
+         0x67, 0x76, 0xa9, 0x14, 0x6a, 0x81, 0xe5, 0x87, 
+         0x58, 0x5e, 0x58, 0xb0, 0x7d, 0xce, 0x29, 0x3a, 
+         0x08, 0x98, 0x94, 0xa0, 0xf8, 0xa6, 0x1b, 0x84, 
+         0x88, 0xac, 0x68
+      };
+      test_vector( s.get_bytes_as_vector(), expected_redeem_script ); 
+   }
+   {
+      std::vector<uint8_t> expected_redeem_script_hash {
+            0x36, 0x18, 0x01, 0x28, 0x6b, 0x4b, 0xe1, 
+            0x37, 0xf6, 0xa4, 0x68, 0xff, 0x8a, 0x34, 
+            0xcf, 0xce, 0xb0, 0x71, 0x76, 0x3c };
+      test_vector( s.hash(), expected_redeem_script_hash );
+   }
+   {
+      std::vector<uint8_t> expected_p2sh_locking_script {
+         0xa9, 0x14, 0x36, 0x18, 0x01, 0x28, 0x6b, 0x4b, 
+         0xe1, 0x37, 0xf6, 0xa4, 0x68, 0xff, 0x8a, 0x34, 
+         0xcf, 0xce, 0xb0, 0x71, 0x76, 0x3c, 0x87 };
+      test_vector( s.p2sh_script(), expected_p2sh_locking_script);
+   }
+   {
+      // attempt to get an address. Start with the redeem script...
+      std::vector<uint8_t> script_hash = s.hash();
+      // then append 0x05 for mainnet, or 0xc4 for testnet
+      script_hash.insert(script_hash.begin(), 0xc4);
+      // then base58check
+      std::string address1 = bc_toolbox::base58check(script_hash);
+      BOOST_CHECK_EQUAL(address1, "2MxBFEWKRPBy96BCxmuZuXkz5CfivDg8e1a");
    }
 }
 
