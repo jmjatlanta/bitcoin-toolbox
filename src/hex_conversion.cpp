@@ -43,7 +43,7 @@ namespace bc_toolbox {
       return retVal;
    }
 
-   std::string opcode_to_string(const char opcode)
+   std::string opcode_to_string(short opcode)
    {
       switch(opcode)
       {
