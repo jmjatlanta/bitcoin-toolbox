@@ -330,4 +330,44 @@ BOOST_AUTO_TEST_CASE( transaction_tests )
    test_vector(trx.to_bytes(), expected );
 }
 
+BOOST_AUTO_TEST_CASE( varint_test )
+{
+   {
+      uint8_t test = 0;
+      BOOST_TEST_MESSAGE( "Testing 0");
+      std::vector<uint8_t> result = bc_toolbox::to_varint(test);
+      std::vector<uint8_t> expected = { 0x00 };
+      test_vector( result, expected );
+      test = 252;
+      BOOST_TEST_MESSAGE( "Testing 252");
+      result = bc_toolbox::to_varint(test);
+      expected = { 0xfc };
+      test_vector( result, expected );
+      test = 106;
+      BOOST_TEST_MESSAGE( "Testing 106");
+      result = bc_toolbox::to_varint(test);
+      expected = { 0x6a };
+      test_vector( result, expected );
+   }
+   {
+      BOOST_TEST_MESSAGE( "Testing 253");
+      uint16_t test = 253;
+      std::vector<uint8_t> result = bc_toolbox::to_varint( test );
+      std::vector<uint8_t> expected = { 0xfd, 0xfd, 0x00 };
+      test_vector( result, expected );
+      BOOST_TEST_MESSAGE( "Testing 550");
+      test = 550;
+      result = bc_toolbox::to_varint( test );
+      expected = { 0xfd, 0x26, 0x02 };
+      test_vector( result, expected );
+   }
+   {
+      BOOST_TEST_MESSAGE( "Testing 998000");
+      uint64_t test = 998000;
+      std::vector<uint8_t> result = bc_toolbox::to_varint( test );
+      std::vector<uint8_t> expected = { 0xfe, 0x70, 0x3a, 0x0f, 0x00 };
+      test_vector( result, expected );
+   }
+}
+
 BOOST_AUTO_TEST_SUITE_END()

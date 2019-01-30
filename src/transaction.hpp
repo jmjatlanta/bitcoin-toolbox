@@ -44,8 +44,6 @@ class transaction
       uint32_t locktime; // block height or timestamp when tx finalizes
    private:
       static void add( std::vector<uint8_t>& vec, const std::vector<uint8_t>& bytes );
-      static std::vector<uint8_t> little_endian(uint64_t val, uint8_t bytes);
-      static std::vector<uint8_t> big_endian(uint64_t val, uint8_t bytes);
       static void add_input( std::vector<uint8_t>& vec, const input& in );
       static void add_output( std::vector<uint8_t>& vec, const output& out );
       static void add_witness( std::vector<uint8_t>& vec, const witness& wit );

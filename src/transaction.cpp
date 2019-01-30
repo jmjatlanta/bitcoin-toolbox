@@ -11,27 +11,6 @@ void transaction::add( std::vector<uint8_t>& vec, const std::vector<uint8_t>& by
    vec.insert( vec.end(), bytes.begin(), bytes.end() );
 }
 
-std::vector<uint8_t> transaction::little_endian(uint64_t val, uint8_t bytes)
-{
-   std::vector<uint8_t> ret_val;
-   uint64_t current_val = val;
-   for( uint8_t pos = 0; pos < bytes; ++pos )
-   {
-         // grab the lowest 2 bytes
-         ret_val.push_back(current_val & 255);
-         // shift the bytes to the right by 2
-         current_val = current_val >> 8;
-   }
-   return ret_val;
-}
-
-std::vector<uint8_t> transaction::big_endian(uint64_t val, uint8_t bytes)
-{
-   std::vector<uint8_t> ret_val = little_endian(val, bytes);
-   std::reverse(ret_val.begin(), ret_val.end());
-   return ret_val;
-}
-
 void transaction::add_input( std::vector<uint8_t>&vec, const input& in)
 {
    add( vec, in.hash );

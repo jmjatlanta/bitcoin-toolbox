@@ -141,5 +141,30 @@ namespace bc_toolbox {
    std::vector<uint8_t> sha256(std::vector<uint8_t> incoming);
    std::vector<uint8_t> ripemd160(std::vector<uint8_t> incoming);
    std::string base58check(std::vector<uint8_t> incoming);
+   // varint stuff
+   /***
+    * @brief convert a big-endian number to bitcoin varint
+    */
+   std::vector<uint8_t> to_varint(uint64_t val);
+   /****
+    * @brief convert a bitcoin varint to a big-endian number
+    */
+   uint64_t from_varint(std::vector<uint8_t> val);
+   // endian
+   /***
+    * @brief convert big endian to little endian
+    * @param val the value to convert
+    * @param bytes the number of bytes to convert
+    * @returns a vector representation of val, but in little_endian
+    */
+   std::vector<uint8_t> little_endian(uint64_t val, uint8_t bytes);
+   /****
+    * @brief convert little endian to big endian
+    * @param val the value to convert
+    * @param bytes the number of bytes to convert
+    * @returns a vector representation of val, but in big-endian
+    */
+   std::vector<uint8_t> big_endian(uint64_t val, uint8_t bytes);
+
 }
 
