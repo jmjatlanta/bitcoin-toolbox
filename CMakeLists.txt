@@ -20,6 +20,7 @@ include_directories( src ${Bitcoin_INCLUDE_DIRS} )
 add_executable( test 
       tests/script_test.cpp 
       src/hex_conversion.cpp 
-      src/script.cpp 
+      src/script.cpp
+      src/transaction.cpp
    )
 target_link_libraries( test ${Boost_LIBRARIES} ${Bitcoin_LIBRARIES} OpenSSL::SSL )
