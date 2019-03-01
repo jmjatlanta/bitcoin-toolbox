@@ -4,13 +4,31 @@ set( Boost_USE_MULTITHREADED ON )
 set( Boost_USE_STATIC_RUNTIME OFF )
 set( Bitcoin_ROOT "/home/jmjatlanta/Development/cpp/bitcoin" CACHE STRING "Root directory of bitcoin (contains the src directory)" )
 set( Bitcoin_INCLUDE_DIRS "${Bitcoin_ROOT}/src")
-set( Bitcoin_LIBRARY_DIRS "${Bitcoin_ROOT}/src" "${Bitcoin_ROOT}/src/crypto" )
-set( Bitcoin_LIBRARIES "bitcoin_common" "bitcoin_crypto_base" "bitcoin_crypto_shani" "bitcoin_crypto_sse41" "bitcoin_crypto_avx2" )
+set( Bitcoin_LIBRARY_DIRS "${Bitcoin_ROOT}/src" "${Bitcoin_ROOT}/src/crypto" "${Bitcoin_ROOT}src/secp256k1/.libs")
+set( Bitcoin_LIBRARIES 
+   "bitcoin_wallet"
+   "bitcoin_cli"
+   "bitcoin_server"
+   "bitcoin_zmq"
+   "bitcoin_util"
+   "bitcoin_common" 
+   "bitcoin_crypto_base" 
+   "bitcoin_consensus"
+   "bitcoin_util"
+   "secp256k1"
+   "bitcoin_crypto_shani" 
+   "bitcoin_crypto_sse41" 
+   "bitcoin_crypto_avx2" 
+   )
 ADD_DEFINITIONS( -DBOOST_TEST_DYN_LINK )
+
+project ( null_func )
+
+add_library( null_func src/translation_func_null.cpp )
 
 project (test)
 
-find_package( Boost COMPONENTS unit_test_framework REQUIRED )
+find_package( Boost COMPONENTS unit_test_framework filesystem thread REQUIRED )
 find_package( OpenSSL REQUIRED )
 
 link_directories( ${Boost_LIBRARY_DIRS} ${Bitcoin_LIBRARY_DIRS} )
@@ -18,9 +36,20 @@ link_directories( ${Boost_LIBRARY_DIRS} ${Bitcoin_LIBRARY_DIRS} )
 include_directories( ${Boost_INCLUDE_DIRS} ${Bitcoin_LIBRARY_DIRS} )
 include_directories( src ${Bitcoin_INCLUDE_DIRS} )
 add_executable( test 
-      tests/script_test.cpp 
+      tests/script_test.cpp
+      # tests/key_test.cpp 
       src/hex_conversion.cpp 
       src/script.cpp
       src/transaction.cpp
    )
-target_link_libraries( test ${Boost_LIBRARIES} ${Bitcoin_LIBRARIES} OpenSSL::SSL )
+target_link_libraries( test 
+   ${Bitcoin_LIBRARIES} 
+   # null_func 
+   ${Boost_LIBRARIES} 
+   OpenSSL::SSL 
+   -lpthread 
+)
+
+#project (test2)
+#add_executable ( test2 tests/test2.cpp )
+#target_link_libraries( test2 null_func )

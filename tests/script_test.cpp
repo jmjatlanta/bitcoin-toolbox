@@ -4,6 +4,8 @@
 #include <vector> 
 #include <stdexcept>
 #include <iostream>
+#include <iomanip>
+#include <fstream>
 
 #include <script.hpp>
 #include <transaction.hpp>
@@ -30,6 +32,61 @@ bool test_vector(std::vector<uint8_t> incoming, std::vector<uint8_t> expected)
       }
    }
    return true;
+}
+
+std::string vector_to_hex_string(std::vector<uint8_t> incoming)
+{
+   std::stringstream ss;
+   for(auto i : incoming)
+   {
+      ss << std::hex << std::setw(2) << std::setfill('0') << (int)i;
+   }
+   return ss.str();
+}
+
+/*****
+ * convert a public key to a hash160
+ */
+std::vector<uint8_t> pubkey_hash(std::vector<uint8_t> incoming)
+{
+   std::vector<uint8_t> sh256 = bc_toolbox::sha256(incoming);
+   return bc_toolbox::ripemd160(sh256);
+}
+
+std::string read_wif_from_file(std::string filename)
+{
+   std::ifstream infile(filename);
+   std::string retval;
+   infile >> retval;
+   return retval;
+}
+
+std::vector<uint8_t> wif_to_pubkey(std::string wif)
+{
+   // convert to byte string using Base58Check encoding
+   // drop last 4 checksum bytes
+   // drop first byte (should be 0x80)
+   // drop last byte if this key is compressed public key (should be 0x01)
+   // we should know this is a compressed public key if it started with K or L instead of 5
+   // (testnet c instead of 9)
+   // should be checked with the checksum
+   // for now, just fake it
+   std::vector<uint8_t> results = {
+      0xa6, 0x7b, 0x6a, 0x0b, 0xb3, 0xe2, 0x72, 0x45, 0x82, 0xc3,
+      0x31, 0x6f, 0x13, 0x79, 0x82, 0xb0, 0xfd, 0x1c, 0xd7, 0xfa, 0x77, 
+      0x8c, 0x49, 0xd1, 0x42, 0x8d, 0xa4, 0xbb, 0x47, 0xd8, 0x39, 0x57
+   };
+   return results;
+}
+
+bool wif_checksum(std::string wif)
+{
+   // convert to byte string using Base58Check encoding
+   // drop last 4 checksum bytes
+   // sha256 the shortened string
+   // sha256 the results of the sha256
+   // the first 4 bytes of the double sha256 should be the same as the last 4 of the original
+   return false;
 }
 
 /**
@@ -73,6 +130,19 @@ BOOST_AUTO_TEST_CASE( int_conv )
       BOOST_CHECK_EQUAL( 8, rslt.first );
       test_vector( rslt.second, expected );
    }
+}
+
+BOOST_AUTO_TEST_CASE( hash_test )
+{
+   std::vector<uint8_t> sha256 = bc_toolbox::sha256("Bitcoin_rules!");
+   std::vector<uint8_t> hash_lock = bc_toolbox::ripemd160(sha256);
+
+   std::vector<uint8_t> expected_hash = {
+      0x81, 0x03, 0xb0, 0xdf, 0x9a, 0xd7, 0x5e, 0x2b, 0x77, 0x4f,
+      0x43, 0xd6, 0xe7, 0xe7, 0x1e, 0xea, 0xa2, 0xc7, 0x3e, 0xfb
+   };
+   std::cout << "The hash of Bitcoin_rules! is :" << vector_to_hex_string(expected_hash) << std::endl;
+   test_vector( hash_lock, expected_hash); 
 }
 
 /**
@@ -190,6 +260,51 @@ BOOST_AUTO_TEST_CASE( timelock_script )
    }
 }
 
+/*****
+ * Testing my interpretation of an HTLC script
+ */
+BOOST_AUTO_TEST_CASE( timelock_script_jmjatlanta )
+{
+   // key stuff
+   std::string wif = read_wif_from_file("john_privkey.txt");
+   std::vector<uint8_t> jmjatlanta_pubkey_hash = pubkey_hash(wif_to_pubkey(wif));
+   std::vector<uint8_t> recipient_pubkey_hash = pubkey_hash(wif_to_pubkey(wif));
+   // lock parameters
+   std::vector<uint8_t> sha256 = bc_toolbox::sha256("jmjatlanta_rules!");
+   std::vector<uint8_t> hash_lock = bc_toolbox::ripemd160(sha256);
+   int timeout = 1551447083; // 2019-3-2 13:31:23
+
+   // following bip199
+   bc_toolbox::script s;
+   s.add_opcode(bc_toolbox::OP_IF);
+   s.add_opcode(bc_toolbox::OP_HASH160);
+   s.add_bytes_with_size(hash_lock);
+   s.add_opcode(bc_toolbox::OP_EQUALVERIFY);
+   s.add_opcode(bc_toolbox::OP_DUP);
+   s.add_opcode(bc_toolbox::OP_HASH160);
+   s.add_bytes_with_size(recipient_pubkey_hash);
+   s.add_opcode(bc_toolbox::OP_ELSE);
+   s.add_int(timeout);
+   s.add_opcode(bc_toolbox::OP_CHECKLOCKTIMEVERIFY);
+   s.add_opcode(bc_toolbox::OP_DROP);
+   s.add_opcode(bc_toolbox::OP_DUP);
+   s.add_opcode(bc_toolbox::OP_HASH160);
+   s.add_bytes_with_size(jmjatlanta_pubkey_hash);
+   s.add_opcode(bc_toolbox::OP_ENDIF);
+   s.add_opcode(bc_toolbox::OP_EQUALVERIFY);
+   s.add_opcode(bc_toolbox::OP_CHECKSIG);
+
+   std::cout << "Script as a byte string: " << vector_to_hex_string(s.get_bytes_as_vector()) << std::endl;
+   std::vector<uint8_t> redeem_script = s.hash();
+   // append 0x05 for mainnet, or 0xc4 for testnet
+   redeem_script.insert(redeem_script.begin(), 0xc4);
+   // then base58check
+   std::string address1 = bc_toolbox::base58check(redeem_script);
+   BOOST_CHECK_EQUAL(address1, "2MwLbxZcHjovnhKMhQHa87TBpJKT1cxCJ8x");
+   std::string results = vector_to_hex_string(redeem_script);
+   std::cout << "Results of timelock_script_jmjatlanta: " << results << std::endl;
+}
+
 /**
  * Test a timelock script mentioned at 
  * https://bitcoin.stackexchange.com/questions/74753/htlc-hash-time-lock-contract-using-bitcoin-qt
@@ -225,6 +340,7 @@ BOOST_AUTO_TEST_CASE( timelock_script_stackexchange )
          0x08, 0x98, 0x94, 0xa0, 0xf8, 0xa6, 0x1b, 0x84, 
          0x88, 0xac, 0x68
       };
+      std::cout << "StackExchange script: " << vector_to_hex_string(expected_redeem_script) << std::endl;
       test_vector( s.get_bytes_as_vector(), expected_redeem_script ); 
    }
    {
