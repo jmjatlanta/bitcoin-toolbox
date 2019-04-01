@@ -46,7 +46,7 @@ class output
          //8 bytes for value
          uint8_t* pos = bytes;
          unsigned char temp[9];
-         value = ( (bytes[7]) << 56 | (bytes[6]) << 48 | (bytes[5]) << 40 | (bytes[4]) << 32 
+         value = ( ((uint64_t)(bytes[7])) << 56 | ((uint64_t)(bytes[6])) << 48 | ((uint64_t)(bytes[5])) << 40 | ((uint64_t)(bytes[4])) << 32 
                | (bytes[3]) << 24 | (bytes[2]) << 16 | (bytes[1]) << 8 | bytes[0]) ;
          pos += 8;
          // read length of signature script
