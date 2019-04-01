@@ -302,4 +302,77 @@ namespace bc_toolbox {
       } // if size is not equal 1
       throw std::out_of_range("varint out of range");
    } // from_varint
+
+   /***
+    * Attempt to read a varint from a stream (char pointer)
+    */
+   uint64_t from_varint( uint8_t* val, uint16_t& bytes_read )
+   {
+      // determine the size (0, 1, 3, 5, or 9)
+      bytes_read = 1;
+      if (val[0] == 0xfd)
+         bytes_read = 3;
+      if (val[0] == 0xfe)
+         bytes_read = 5;
+      if (val[0] == 0xff)
+         bytes_read = 9;
+      if ( bytes_read == 1 )
+      {
+         uint8_t ret_val = val[0];
+         return ret_val;
+      }
+      else
+      {
+         if ( (bytes_read == 3 && val[0] == 0xffff)
+               || (bytes_read == 5 && val[0] == 0xffffffff) 
+               || (bytes_read == 9 && val[0] == 0xffffffffffffffff) )
+         {
+            val++;
+            uint64_t ret_val;
+            // put values back in big-endian order
+            uint8_t bytes_to_read[bytes_read-1];
+            uint8_t pos = 0;
+            for(uint8_t i = bytes_read-1; i > 0;--i)
+            {
+               bytes_to_read[pos] = val[i];
+               pos++;
+            }
+            if ( bytes_read == 3)
+            {
+               uint16_t new_val = bytes_to_read[0];
+               ret_val = new_val;
+            }
+            if ( bytes_read == 5)
+            {
+               uint32_t new_val = bytes_to_read[0];
+               ret_val = new_val;
+            }
+            if ( bytes_read == 9 )
+            {
+               ret_val = bytes_to_read[0];
+            }
+            return ret_val;
+         } // if size matches
+      } // if size is not equal 1
+      throw std::out_of_range("varint out of range");
+   } // from_varint
+
+   std::vector<uint8_t> hex_string_to_vector(std::string input)
+   {
+      std::vector<uint8_t> results;
+      if (input.size()%2 != 0)
+         throw std::invalid_argument("odd number of bytes");
+      
+      char temp[3];
+      temp[2] = 0;
+      for(uint32_t pos = 0; pos < input.length(); pos += 2)
+      {
+         temp[0] = input[pos];
+         temp[1] = input[pos+1];
+         uint8_t val = std::strtol(temp, nullptr, 16);
+         results.push_back( val );
+      }
+      return results;
+   }
+
 } // namespace bc_toolbox

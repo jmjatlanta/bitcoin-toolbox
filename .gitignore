@@ -37,3 +37,4 @@ CMakeFiles
 cmake_install.cmake
 test
 tests/john_privkey.txt
+.vscode/*

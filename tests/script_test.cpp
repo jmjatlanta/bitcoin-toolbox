@@ -44,6 +44,12 @@ std::string vector_to_hex_string(std::vector<uint8_t> incoming)
    return ss.str();
 }
 
+std::vector<uint8_t> string_to_vector(std::string incoming)
+{
+   std::vector<uint8_t> ret_val(incoming.begin(), incoming.end());
+   return ret_val;
+}
+
 /*****
  * convert a public key to a hash160
  */
@@ -53,40 +59,12 @@ std::vector<uint8_t> pubkey_hash(std::vector<uint8_t> incoming)
    return bc_toolbox::ripemd160(sh256);
 }
 
-std::string read_wif_from_file(std::string filename)
+std::string read_pk_from_file(std::string filename)
 {
    std::ifstream infile(filename);
    std::string retval;
    infile >> retval;
    return retval;
-}
-
-std::vector<uint8_t> wif_to_pubkey(std::string wif)
-{
-   // convert to byte string using Base58Check encoding
-   // drop last 4 checksum bytes
-   // drop first byte (should be 0x80)
-   // drop last byte if this key is compressed public key (should be 0x01)
-   // we should know this is a compressed public key if it started with K or L instead of 5
-   // (testnet c instead of 9)
-   // should be checked with the checksum
-   // for now, just fake it
-   std::vector<uint8_t> results = {
-      0xa6, 0x7b, 0x6a, 0x0b, 0xb3, 0xe2, 0x72, 0x45, 0x82, 0xc3,
-      0x31, 0x6f, 0x13, 0x79, 0x82, 0xb0, 0xfd, 0x1c, 0xd7, 0xfa, 0x77, 
-      0x8c, 0x49, 0xd1, 0x42, 0x8d, 0xa4, 0xbb, 0x47, 0xd8, 0x39, 0x57
-   };
-   return results;
-}
-
-bool wif_checksum(std::string wif)
-{
-   // convert to byte string using Base58Check encoding
-   // drop last 4 checksum bytes
-   // sha256 the shortened string
-   // sha256 the results of the sha256
-   // the first 4 bytes of the double sha256 should be the same as the last 4 of the original
-   return false;
 }
 
 /**
@@ -266,9 +244,10 @@ BOOST_AUTO_TEST_CASE( timelock_script )
 BOOST_AUTO_TEST_CASE( timelock_script_jmjatlanta )
 {
    // key stuff
-   std::string wif = read_wif_from_file("john_privkey.txt");
-   std::vector<uint8_t> jmjatlanta_pubkey_hash = pubkey_hash(wif_to_pubkey(wif));
-   std::vector<uint8_t> recipient_pubkey_hash = pubkey_hash(wif_to_pubkey(wif));
+   std::string priv_key_string = read_pk_from_file("john_privkey.txt");
+   std::vector<uint8_t> priv_key = bc_toolbox::hex_string_to_vector(priv_key_string);
+   std::vector<uint8_t> jmjatlanta_pubkey_hash = pubkey_hash(priv_key);
+   std::vector<uint8_t> recipient_pubkey_hash = pubkey_hash(priv_key);
    // lock parameters
    std::vector<uint8_t> sha256 = bc_toolbox::sha256("jmjatlanta_rules!");
    std::vector<uint8_t> hash_lock = bc_toolbox::ripemd160(sha256);
@@ -303,6 +282,8 @@ BOOST_AUTO_TEST_CASE( timelock_script_jmjatlanta )
    BOOST_CHECK_EQUAL(address1, "2MwLbxZcHjovnhKMhQHa87TBpJKT1cxCJ8x");
    std::string results = vector_to_hex_string(redeem_script);
    std::cout << "Results of timelock_script_jmjatlanta: " << results << std::endl;
+
+   // now we need to fund the address with a UTXO that contains the script
 }
 
 /**
@@ -366,6 +347,11 @@ BOOST_AUTO_TEST_CASE( timelock_script_stackexchange )
       std::string address1 = bc_toolbox::base58check(script_hash);
       BOOST_CHECK_EQUAL(address1, "2MxBFEWKRPBy96BCxmuZuXkz5CfivDg8e1a");
    }
+   // now send funds to the address
+   // now start the redeem by creating a basic raw transaction
+   // now sign the basic raw transaction
+   // now bring in the secret, as the wallet does not support custom scripts
+   // now send the transaction
 }
 
 BOOST_AUTO_TEST_CASE( transaction_tests )
@@ -484,6 +470,15 @@ BOOST_AUTO_TEST_CASE( varint_test )
       std::vector<uint8_t> expected = { 0xfe, 0x70, 0x3a, 0x0f, 0x00 };
       test_vector( result, expected );
    }
+}
+
+BOOST_AUTO_TEST_CASE( raw_transaction_parse )
+{
+   std::string raw_tx_string = "0200000001284f2c75c4ff937f83f48b16f56b2f9049fe101a2341e219e7996cd1f28eb54d01000000af4cad63a914d31466ed1232e9e156c859e74911489cc7d430df8876a9423032613637623661306262336532373234353832633333313666313337393832623066643163643766613737386334396431343238646134626234376438333935376704bc7aa55cb17576a9423032613637623661306262336532373234353832633333313666313337393832623066643163643766613737386334396431343238646134626234376438333935376888acffffffff01a0bb0d000000000017a9141911177214bca4efb78eaf27f3cbc5d3ded12a5a8700000000";
+   std::vector<uint8_t> bytes = bc_toolbox::hex_string_to_vector(raw_tx_string);
+   bc_toolbox::transaction tx(bytes);
+   std::vector<uint8_t> result_bytes = tx.to_bytes();
+   test_vector(result_bytes, bytes);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

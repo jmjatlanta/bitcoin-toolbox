@@ -4,6 +4,26 @@
 #include <vector>
 #include <utility>
 #include <cstdint>
+#include <climits>
+
+template <typename T>
+T swap_endian(T u)
+{
+    static_assert (CHAR_BIT == 8, "CHAR_BIT != 8");
+
+    union
+    {
+        T u;
+        unsigned char u8[sizeof(T)];
+    } source, dest;
+
+    source.u = u;
+
+    for (size_t k = 0; k < sizeof(T); k++)
+        dest.u8[k] = source.u8[sizeof(T) - k - 1];
+
+    return dest.u;
+}
 
 namespace bc_toolbox {
    // constants
@@ -150,6 +170,15 @@ namespace bc_toolbox {
     * @brief convert a bitcoin varint to a big-endian number
     */
    uint64_t from_varint(std::vector<uint8_t> val);
+
+   /*******
+    * Convert a stream of bytes into a bitcoin variant
+    * @param input the stream of bytes as an array
+    * @param bytes_read the number of bytes read from the array
+    * @returns the integer (must be less than 64bit)
+    */
+   uint64_t from_varint(uint8_t* input, uint16_t &bytes_read);
+
    // endian
    /***
     * @brief convert big endian to little endian
@@ -165,6 +194,14 @@ namespace bc_toolbox {
     * @returns a vector representation of val, but in big-endian
     */
    std::vector<uint8_t> big_endian(uint64_t val, uint8_t bytes);
+
+   /******
+    * Utility to convert a hex string to a binary string
+    * Example "0a0b0c" becomes { 0x0a, 0x0b, 0x0c }
+    * @param input the incoming string
+    * @returns the vector of bytes
+    */
+   std::vector<uint8_t> hex_string_to_vector(std::string input);
 
 }
 

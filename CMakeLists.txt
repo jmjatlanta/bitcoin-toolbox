@@ -1,10 +1,11 @@
 cmake_minimum_required( VERSION 2.6 )
+set( CMAKE_CXX_STANDARD 11 )
 set( Boost_USE_STATIC_LIBS OFF )
 set( Boost_USE_MULTITHREADED ON )
 set( Boost_USE_STATIC_RUNTIME OFF )
 set( Bitcoin_ROOT "/home/jmjatlanta/Development/cpp/bitcoin" CACHE STRING "Root directory of bitcoin (contains the src directory)" )
 set( Bitcoin_INCLUDE_DIRS "${Bitcoin_ROOT}/src")
-set( Bitcoin_LIBRARY_DIRS "${Bitcoin_ROOT}/src" "${Bitcoin_ROOT}/src/crypto" "${Bitcoin_ROOT}src/secp256k1/.libs")
+set( Bitcoin_LIBRARY_DIRS "${Bitcoin_ROOT}/src" "${Bitcoin_ROOT}/src/crypto" "${Bitcoin_ROOT}/src/secp256k1/.libs")
 set( Bitcoin_LIBRARIES 
    "bitcoin_wallet"
    "bitcoin_cli"
@@ -53,3 +54,52 @@ target_link_libraries( test
 #project (test2)
 #add_executable ( test2 tests/test2.cpp )
 #target_link_libraries( test2 null_func )
+
+project (hash_256)
+add_executable( hash_256 utils/hash_256.cpp
+   src/hex_conversion.cpp
+ )
+ target_link_libraries( hash_256 
+   ${Bitcoin_LIBRARIES}
+   ${Boost_Libraries}
+   OpenSSL::SSL
+ )
+
+project (calc_timeout)
+add_executable (calc_timeout utils/calc_timeout.cpp)
+
+project (calc_script_address )
+add_executable (calc_script_address 
+   utils/calc_script_address.cpp 
+   src/script.cpp
+   src/hex_conversion.cpp
+)
+target_link_libraries( calc_script_address
+   ${Bitcoin_LIBRARIES}
+   ${Boost_Libraries}
+   OpenSSL::SSL
+ )
+
+project (calc_redeem_script )
+add_executable (calc_redeem_script
+   utils/calc_redeem_script.cpp 
+   src/script.cpp
+   src/hex_conversion.cpp
+)
+target_link_libraries( calc_redeem_script
+   ${Bitcoin_LIBRARIES}
+   ${Boost_Libraries}
+   OpenSSL::SSL
+ )
+
+project ( john_pk_to_sha256 )
+add_executable (john_pk_to_sha256
+   utils/john_pk_to_sha256.cpp 
+   src/script.cpp
+   src/hex_conversion.cpp
+)
+target_link_libraries( john_pk_to_sha256
+   ${Bitcoin_LIBRARIES}
+   ${Boost_Libraries}
+   OpenSSL::SSL
+ )
