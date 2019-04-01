@@ -38,3 +38,7 @@ cmake_install.cmake
 test
 tests/john_privkey.txt
 .vscode/*
+calc_redeem_script
+calc_script_address
+calc_timeout
+hash_256

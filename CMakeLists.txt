@@ -92,14 +92,3 @@ target_link_libraries( calc_redeem_script
    OpenSSL::SSL
  )
 
-project ( john_pk_to_sha256 )
-add_executable (john_pk_to_sha256
-   utils/john_pk_to_sha256.cpp 
-   src/script.cpp
-   src/hex_conversion.cpp
-)
-target_link_libraries( john_pk_to_sha256
-   ${Bitcoin_LIBRARIES}
-   ${Boost_Libraries}
-   OpenSSL::SSL
- )
