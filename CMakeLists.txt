@@ -65,6 +65,26 @@ add_executable( hash_256 utils/hash_256.cpp
    OpenSSL::SSL
  )
 
+project (hash_160)
+add_executable( hash_160 utils/hash_160.cpp
+   src/hex_conversion.cpp
+ )
+ target_link_libraries( hash_160 
+   ${Bitcoin_LIBRARIES}
+   ${Boost_Libraries}
+   OpenSSL::SSL
+ )
+
+project (hash_ascii)
+add_executable( hash_ascii utils/hash_ascii.cpp
+   src/hex_conversion.cpp
+ )
+ target_link_libraries( hash_ascii 
+   ${Bitcoin_LIBRARIES}
+   ${Boost_Libraries}
+   OpenSSL::SSL
+ )
+
 project (calc_timeout)
 add_executable (calc_timeout utils/calc_timeout.cpp)
 
@@ -87,6 +107,21 @@ add_executable (calc_redeem_script
    src/hex_conversion.cpp
 )
 target_link_libraries( calc_redeem_script
+   ${Bitcoin_LIBRARIES}
+   ${Boost_Libraries}
+   OpenSSL::SSL
+ )
+
+project (add_preimage_to_signed_tx )
+include_directories( /home/jmjatlanta/Development/cpp/rapidjson/include )
+add_executable (add_preimage_to_signed_tx
+   utils/add_preimage_to_signed_tx.cpp 
+   src/script.cpp
+   src/hex_conversion.cpp
+   src/transaction.cpp
+   src/script.cpp
+)
+target_link_libraries( add_preimage_to_signed_tx
    ${Bitcoin_LIBRARIES}
    ${Boost_Libraries}
    OpenSSL::SSL

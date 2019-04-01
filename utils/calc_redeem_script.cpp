@@ -7,7 +7,7 @@
 
 void print_help_and_exit(int argc, char** argv)
 {
-   std::cerr << "Syntax: " << argv[0] << " [ testnet | mainnet ] HASHLOCK RECEIVER_PRIMARY_KEY TIMELOCK SENDER_PRIMARY_KEY\n";
+   std::cerr << "Syntax: " << argv[0] << " [ testnet | mainnet ] HASH160_HASHLOCK RECEIVER_PRIMARY_KEY TIMELOCK SENDER_PRIMARY_KEY\n";
    if (argc > 1)
    {
       std::cerr << "Parameters passed: ";
@@ -47,13 +47,12 @@ int main(int argc, char**argv)
       testnet = true;
    if (!testnet && std::string(argv[1]) != "mainnet")
       print_help_and_exit(argc, argv);
-   std::vector<uint8_t> sha256_hash_lock = string_to_vector(argv[2]);
-   std::vector<uint8_t> recipient_pubkey_hash = string_to_vector(argv[3]);
+   std::vector<uint8_t> hash160_hash_lock = bc_toolbox::hex_string_to_vector(argv[2]);
+   std::vector<uint8_t> recipient_pubkey = bc_toolbox::hex_string_to_vector(argv[3]);
+   std::vector<uint8_t> recipient_pubkey_hash = bc_toolbox::ripemd160(bc_toolbox::sha256(recipient_pubkey));
    uint32_t timeout = std::atoi(argv[4]);
-   std::vector<uint8_t> sender_pubkey_hash = string_to_vector(argv[5]);
-
-   // lock parameters
-   std::vector<uint8_t> hash160_hash_lock = bc_toolbox::ripemd160(sha256_hash_lock);
+   std::vector<uint8_t> sender_pubkey = bc_toolbox::hex_string_to_vector(argv[5]);
+   std::vector<uint8_t> sender_pubkey_hash = bc_toolbox::ripemd160(bc_toolbox::sha256(sender_pubkey));
 
    // following bip199
    bc_toolbox::script s;

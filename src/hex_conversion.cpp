@@ -1,5 +1,7 @@
 #include <stdexcept>
 #include <algorithm>
+#include <sstream>
+#include <iomanip>
 
 #include <hex_conversion.hpp>
 
@@ -373,6 +375,16 @@ namespace bc_toolbox {
          results.push_back( val );
       }
       return results;
+   }
+
+   std::string vector_to_hex_string(std::vector<uint8_t> incoming)
+   {
+      std::stringstream ss;
+      for(auto i : incoming)
+      {
+         ss << std::hex << std::setw(2) << std::setfill('0') << (int)i;
+      }
+      return ss.str();
    }
 
 } // namespace bc_toolbox

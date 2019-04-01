@@ -3,6 +3,8 @@
 #include <vector>
 #include <cstdint>
 
+#include <hex_conversion.hpp>
+
 namespace bc_toolbox {
 
 class input

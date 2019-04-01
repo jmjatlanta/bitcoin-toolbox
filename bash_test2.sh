@@ -1,0 +1,30 @@
+#!/bin/bash
+BITCOIN_CLI="/home/jmjatlanta/Development/cpp/bitcoin/src/bitcoin-cli -testnet -rpcuser=jmjatlanta -rpcpassword=$1"
+
+#acquire these from bitcoin-cli listunspent
+INPUT_TXID="4db58ef2d16c99e719e241231a10fe49902f6bf5168bf4837f93ffc4752c4f28"
+INPUT_VOUT="1"
+INPUT_SCRIPTPUBKEY="a9145089af4afe90675dc25246171e1f6e8c0fdedb5f87"
+REDEEM_SCRIPT="63a914d31466ed1232e9e156c859e74911489cc7d430df8876a9423032613637623661306262336532373234353832633333313666313337393832623066643163643766613737386334396431343238646134626234376438333935376704bc7aa55cb17576a9423032613637623661306262336532373234353832633333313666313337393832623066643163643766613737386334396431343238646134626234376438333935376888ac"
+# where to send the funds to
+TARGET_ADDRESS="2MuXmMd8nqA88b7Eg2k2yaGVAvVLUksBKNd"
+# signer
+SIGNING_KEY="cPeR2sYP78ucAugXHHHibKxcV6eycTV53dFJ59seSKWNEoVsM6Rp"
+SENDER_PK="02a67b6a0bb3e2724582c3316f137982b0fd1cd7fa778c49d1428da4bb47d83957"
+# A little less than all of it, for the transaction fee
+SPEND_TX_VALUE="0.009"
+PREIMAGE="jmjatlanta"
+
+# Create a raw transaction to use for redeeming
+PART1="[{\"txid\":\"$INPUT_TXID\",\"vout\":$INPUT_VOUT}]"
+PART2="{\"$TARGET_ADDRESS\":$SPEND_TX_VALUE}"
+RAW_TX="$(${BITCOIN_CLI} createrawtransaction ${PART1} ${PART2})"
+# sign the raw transaction
+PART1="[\"$SIGNING_KEY\"]"
+PART2="[{\"txid\":\"$INPUT_TXID\",\"vout\":$INPUT_VOUT,\"scriptPubKey\":\"$INPUT_SCRIPTPUBKEY\",\"redeemScript\":\"$REDEEM_SCRIPT\"}]"
+${BITCOIN_CLI} signrawtransaction ${RAW_TX} ${PART2} ${PART1} > temp.json
+COMPLETED_CMD="./add_preimage_to_signed_tx temp.json ${PREIMAGE} ${SENDER_PK}"
+COMPLETED_TX="$(${COMPLETED_CMD})"
+echo "Completed tx: ${COMPLETED_TX}"
+
+

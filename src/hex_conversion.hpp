@@ -202,6 +202,8 @@ namespace bc_toolbox {
     * @returns the vector of bytes
     */
    std::vector<uint8_t> hex_string_to_vector(std::string input);
+   std::string vector_to_hex_string(std::vector<uint8_t> in);
+
 
 }
 
